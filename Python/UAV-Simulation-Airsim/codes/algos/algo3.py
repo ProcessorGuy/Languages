@@ -88,10 +88,11 @@ def createHexagons(polyMain, rPoly):
       
     # start of algorithm
     kk = 0 # control variable
+    toleranceHex = -3 # tolerable areas for edge points
     jj = ymin
-    while jj < ymax:
+    while jj < ymax+yStep:
         ii = xmin
-        while ii < xmax:
+        while ii < xmax+xStep:
             xCenter = ii if  kk % 2 == 0 else ii + round(rPoly* math.cos(math.radians(150)),rNum)
             yCenter = jj
             cP = (xCenter,yCenter)
@@ -105,7 +106,8 @@ def createHexagons(polyMain, rPoly):
             if hexPolygon.within(polyMain):
                 hexList.append(hexPolygon) 
             else:
-                if hexPolygon.intersects(polyMain):
+                # remove just touching points by using buffer otherwise keep them
+                if hexPolygon.buffer(toleranceHex).intersects(polyMain):
                     hexList.append(hexPolygon) 
                 else: 
                     pass               
