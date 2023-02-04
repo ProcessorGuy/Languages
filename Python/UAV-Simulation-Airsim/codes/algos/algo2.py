@@ -74,60 +74,54 @@ class UAVObj():
     
 def createHexagons(polyMain, rPoly):
     # get boundary of polygon
-    startx, starty, endx, endy = polyMain.bounds
+    xmin, ymin , xmax, ymax = polyMain.bounds
+           
+    # round number for precision
+    rNum = 3
     
-    sl = (2 * rPoly) * math.tan(math.pi / 6)
-
-    # calculate coordinates of the hexagon points
-    p = sl * 0.5
-    b = sl * math.cos(math.radians(30))
-    w = b * 2
-    h = 2 * sl
-
-    # offsets for moving along and up rows
-    xoffset = b
-    yoffset = 3 * p
-
-    row = 1
-
-    shifted_xs = []
-    straight_xs = []
-    shifted_ys = []
-    straight_ys = []
+    # create empty list of hexagons
+    hexList = []
     
-    # include corners
-    startx = startx - rPoly
-    starty = starty - rPoly
+    # determine step sizes
+    yStep = rPoly+rPoly//2
+    xStep = 2*round(rPoly* math.cos(math.radians(30)) ,rNum)
+      
+    # start of algorithm
+    kk = 0 # control variable
+    jj = ymin
+    while jj < ymax:
+        ii = xmin
+        while ii < xmax:
+            xCenter = ii if  kk % 2 == 0 else ii + round(rPoly* math.cos(math.radians(150)),rNum)
+            yCenter = jj
+            cP = (xCenter,yCenter)
+            AA =  (round(rPoly* math.cos(math.radians(30)) ,rNum)+cP[0], round(rPoly* math.sin(math.radians(30)) ,rNum)+cP[1])
+            BB =  (round(rPoly* math.cos(math.radians(90)) ,rNum)+cP[0], round(rPoly* math.sin(math.radians(90)) ,rNum)+cP[1]) 
+            CC =  (round(rPoly* math.cos(math.radians(150)),rNum)+cP[0], round(rPoly* math.sin(math.radians(150)),rNum)+cP[1]) 
+            DD =  (round(rPoly* math.cos(math.radians(210)),rNum)+cP[0], round(rPoly* math.sin(math.radians(210)),rNum)+cP[1]) 
+            EE =  (round(rPoly* math.cos(math.radians(270)),rNum)+cP[0], round(rPoly* math.sin(math.radians(270)),rNum)+cP[1]) 
+            FF =  (round(rPoly* math.cos(math.radians(330)),rNum)+cP[0], round(rPoly* math.sin(math.radians(330)),rNum)+cP[1])  
+            hexPolygon = Polygon([AA, BB, CC, DD, EE, FF])     
+            if hexPolygon.within(polyMain):
+                hexList.append(hexPolygon) 
+            else:
+                if hexPolygon.intersects(polyMain):
+                    hexList.append(hexPolygon) 
+                else: 
+                    pass               
+            ii += xStep
+        kk += 1
+        jj += yStep
 
-    while startx < endx:
-        xs = [startx, startx, startx + b, startx + w, startx + w, startx + b, startx]
-        straight_xs.append(xs)
-        shifted_xs.append([xoffset + x for x in xs])
-        startx += w
-
-    while starty < endy:
-        ys = [starty + p, starty + (3 * p), starty + h, starty + (3 * p), starty + p, starty, starty + p]
-        (straight_ys if row % 2 else shifted_ys).append(ys)
-        starty += yoffset
-        row += 1
-
-    polygons = [zip(xs, ys) for xs in shifted_xs for ys in shifted_ys] + [zip(xs, ys) for xs in straight_xs for ys in straight_ys]
-    
-    # convert polygon points into polygon object
-    polygonList = [Polygon(ii) for ii in polygons]
-    
-    # include just intersected hexagon points
-    polygonListWithoutInt = [ii for ii in polygonList if polyMain.intersects(ii)]
-          
     # create hexagon object for each hexagon
     jj = 1
     hexObjList = []
-    for ii in polygonListWithoutInt:
+    for ii in hexList:
         hexObj = HexagonObj(ii, jj)
         hexObjList.append(hexObj)   
         jj += 1
         
-    return hexObjList
+    return hexObjList    
     
 def createUAVs(polycoords, swarmSize): 
 
